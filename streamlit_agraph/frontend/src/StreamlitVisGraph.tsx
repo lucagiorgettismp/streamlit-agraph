@@ -8,6 +8,7 @@ function StreamlitVisGraph() {
 
   const graphIn = JSON.parse(renderData.args["data"]);
   const options: Options = JSON.parse(renderData.args["config"]);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const graph: GraphData = {
     nodes: graphIn.nodes.slice(),
@@ -40,38 +41,32 @@ function StreamlitVisGraph() {
 
   const events: GraphEvents = {
     selectNode: (event) => {
-      const node = getNodeById(event.nodes[0]);
-      // Streamlit.setComponentValue(node);
-      Streamlit.setComponentValue({
-        ...node,
-        eventType: "click"
-      });
-    },
-    selectEdge: (event) => {
-      const edge = graphIn.edges.find(edge => edge.id === event.edges[0]);
-      if (edge) {
-        Streamlit.setComponentValue({
-          type: "edge",
-          label: edge.label,
-          color: edge.color,
-          from: edge.from,
-          to: edge.to,
-          id: edge.id,
-          eventType: "click"
-        });
-      } else {
-        Streamlit.setComponentValue(null);
-      }
+      // Ritarda l'esecuzione del click per vedere se arriva un doubleClick
+      clickTimeoutRef.current = setTimeout(() => {
+        const node = getNodeById(event.nodes[0]);
+        if (node) {
+          Streamlit.setComponentValue({
+            ...node,
+            eventType: "click"
+          });
+        }
+      }, 250); // delay ragionevole per distinguere click da doubleClick
     },
     doubleClick: (event) => {
+      // Se arriva un doubleClick, cancella il click in sospeso
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
+
       if (event.nodes.length > 0) {
-          const node = getNodeById(event.nodes[0]);
-          if (node) {
-            Streamlit.setComponentValue({
-              ...node,
-              eventType: "doubleClick"
-            });
-          }
+        const node = getNodeById(event.nodes[0]);
+        if (node) {
+          Streamlit.setComponentValue({
+            ...node,
+            eventType: "doubleClick"
+          });
+        }
       } else if (event.edges.length > 0) {
         const edge = graphIn.edges.find(edge => edge.id === event.edges[0]);
         if (edge) {
@@ -88,6 +83,24 @@ function StreamlitVisGraph() {
       } else {
         Streamlit.setComponentValue(null);
       }
+    },
+    selectEdge: (event) => {
+      clickTimeoutRef.current = setTimeout(() => {
+        const edge = graphIn.edges.find(edge => edge.id === event.edges[0]);
+        if (edge) {
+          Streamlit.setComponentValue({
+            type: "edge",
+            label: edge.label,
+            color: edge.color,
+            from: edge.from,
+            to: edge.to,
+            id: edge.id,
+            eventType: "click"
+          });
+        } else {
+          Streamlit.setComponentValue(null);
+        }
+      }, 250);
     }
   };
 
@@ -104,7 +117,7 @@ function StreamlitVisGraph() {
         }}
       />
     </span>
-  )
+  );
 }
 
 export default StreamlitVisGraph;
