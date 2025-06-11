@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import VisGraph, { GraphData, GraphEvents, Options } from 'react-vis-graph-wrapper';
 import { Streamlit } from "streamlit-component-lib";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
@@ -6,29 +6,15 @@ import { useRenderData } from "streamlit-component-lib-react-hooks";
 function StreamlitVisGraph() {
   const renderData = useRenderData();
 
-  const graphIn = JSON.parse(renderData.args["data"]);
-  const options: Options = JSON.parse(renderData.args["config"]);
+  const graphIn = JSON.parse(renderData.args["data"])
+
+  const options: Options = JSON.parse(renderData.args["config"])
+
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const graph: GraphData = {
-    nodes: graphIn.nodes.slice(),
-    edges: graphIn.edges.slice()
-  };
+  const lookupNodeId = (lookupNode, myNodes) => myNodes.find(node => node.id === lookupNode);
 
-  const networkRef = useRef<any>(null); // riferimento alla rete
-
-  // const prevGraphRef = useRef<{ nodes: any[], edges: any[] } | null>(null);
-
-  // useEffect(() => {
-  //   const prev = prevGraphRef.current;
-  //   const isDifferent = JSON.stringify(prev) !== JSON.stringify(graphIn);
-
-  //   if (networkRef.current && isDifferent) {
-  //     networkRef.current.fit({ animation: true });
-  //     prevGraphRef.current = graphIn;
-  //   }
-  // }, [graphIn]);
-
+  const graph: GraphData = {nodes: graphIn.nodes.slice(), edges: graphIn.edges.slice()}
   const getNodeById = (nodeId) => {
     const element = graphIn.nodes.find(node => node.id === nodeId);
     return element ? {
@@ -110,10 +96,8 @@ function StreamlitVisGraph() {
         graph={graph}
         options={options}
         events={events}
-        ref={(networkInstance) => {
-          if (networkInstance) {
-            networkRef.current = networkInstance;
-          }
+        ref = {(network: any) => {
+          // console.log(network)
         }}
       />
     </span>
