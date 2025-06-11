@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import VisGraph, { GraphData, GraphEvents, Options } from 'react-vis-graph-wrapper';
 import { Streamlit } from "streamlit-component-lib";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
@@ -11,6 +11,10 @@ function StreamlitVisGraph() {
   const options: Options = JSON.parse(renderData.args["config"])
 
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const fit = renderData.args["fit"] === true;
+
+  const networkRef = useRef<any>(null);
 
   const lookupNodeId = (lookupNode, myNodes) => myNodes.find(node => node.id === lookupNode);
 
@@ -90,14 +94,21 @@ function StreamlitVisGraph() {
     }
   };
 
+  useEffect(() => {
+    if (fit && networkRef.current?.fit) {
+      networkRef.current.fit();
+    }
+  }, [fit]);
+
   return (
     <span>
       <VisGraph
         graph={graph}
         options={options}
         events={events}
-        ref = {(network: any) => {
+        ref = {(networkInstance: any) => {
           // console.log(network)
+          networkRef.current = networkInstance?.network;
         }}
       />
     </span>
